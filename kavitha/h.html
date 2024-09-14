@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Rate Monitor</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url("heartbeat.jpg"); /* Ensure the correct path */
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Transparent box */
+        .container {
+            background-color: rgba(255, 255, 255, 0.7); /* 0.7 makes the box 70% opaque */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px; /* Adjust the box width */
+        }
+
+        /* Style for the heading */
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Style for the button */
+        button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Add hover effect to the button */
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Style for the heart rate display */
+        #heartRate {
+            font-size: 22px;
+            color: red;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Heart Rate Monitor</h1>
+    <button id="connect-btn">Connect to Heart Rate Sensor</button>
+    <p id="heartRate">Heart Rate: -- bpm</p>
+</div>
+
+<script>
+    // Function to connect to the heart rate monitor using Web Bluetooth API
+    async function connectHeartRateSensor() {
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: ['heart_rate'] }]
+            });
+            
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService('heart_rate');
+            const characteristic = await service.getCharacteristic('heart_rate_measurement');
+
+            // Listen to heart rate data
+            characteristic.startNotifications();
+            characteristic.addEventListener('characteristicvaluechanged', handleHeartRateData);
+        } catch (error) {
+            console.log('Error connecting to heart rate sensor: ', error);
+        }
+    }
+
+    // Function to process heart rate data
+    function handleHeartRateData(event) {
+        const value = event.target.value;
+        const heartRate = value.getUint8(1); // Get heart rate value
+        document.getElementById('heartRate').innerText = `Heart Rate: ${heartRate} bpm`;
+    }
+
+    document.getElementById('connect-btn').addEventListener('click', connectHeartRateSensor);
+</script>
+
+</body>
+</html>
